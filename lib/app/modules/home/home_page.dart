@@ -159,24 +159,29 @@ class _HomePageState extends ModularState<HomePage, HomeStore> {
                               color: Colors.green,
                               textColor: Colors.white,
                               onPressed: () async {
-                                r.device.connect(
+                                await r.device.connect(
                                   autoConnect: false,
                                 );
 
-                                // r.device
-                                //     .discoverServices()
-                                //     .timeout(Duration(seconds: 5))
-                                //     .whenComplete(
-                                //       () async => await Future.delayed(
-                                //         Duration(seconds: 3),
-                                //         () async => await _setconfigs(r.device),
-                                //       ),
-                                //     );
+                                await r.device
+                                    .discoverServices()
+                                    .timeout(Duration(seconds: 2))
+                                    .catchError((onError) {
+                                  log(onError.toString());
+                                });
+
+                                await Future.delayed(
+                                  Duration(seconds: 2),
+                                  () async =>
+                                      await _setDescriptorConfig(r.device),
+                                );
 
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) {
-                                      return DeviceScreen(device: r.device);
+                                      return DeviceScreen(
+                                        device: r.device,
+                                      );
                                       // return Scaffold(
                                       //   appBar: AppBar(
                                       //     title: Text('Teste'),
@@ -201,100 +206,101 @@ class _HomePageState extends ModularState<HomePage, HomeStore> {
     );
   }
 
-  // Future<void> _setconfigs(BluetoothDevice device) async {
-  //   // BluetoothCharacteristic notifyCharacteristic;
-  //   // BluetoothCharacteristic writeCharacteristic;
-  //   BluetoothDescriptor descriptor;
+  Future<void> _setDescriptorConfig(BluetoothDevice device) async {
+    // BluetoothCharacteristic notifyCharacteristic;
+    // BluetoothCharacteristic writeCharacteristic;
+    BluetoothDescriptor descriptor;
 
-  //   if (Platform.isAndroid) {
-  //     try {
-  //       log('iniciando negociacao do mtu');
-  //       await device
-  //           .requestMtu(23)
-  //           .timeout(Duration(seconds: 2))
-  //           .then((value) async {
-  //         device.mtu.listen((event) {
-  //           log('MTU negociado com sucesso: Size-> ' + event.toString());
-  //         });
-  //       }).catchError((onError) {
-  //         log('Error ' + onError.toString());
-  //       });
-  //     } catch (e) {
-  //       log('erro ao negociar o MTU' + e.toString());
-  //     }
-  //   }
+    if (Platform.isAndroid) {
+      try {
+        log('iniciando negociacao do mtu');
+        await device
+            .requestMtu(23)
+            .timeout(Duration(seconds: 2))
+            .then((value) async {
+          device.mtu.listen((event) {
+            log('MTU negociado com sucesso: Size-> ' + event.toString());
+          });
+        }).catchError((onError) {
+          log('Error ' + onError.toString());
+        });
+      } catch (e) {
+        log('erro ao negociar o MTU' + e.toString());
+      }
+    }
 
-  //   await Future.delayed(
-  //     Duration(seconds: 2),
-  //     () {
-  //       device.services.forEach(
-  //         (listServices) {
-  //           listServices.forEach(
-  //             (service) {
-  //               if (service.uuid.toString().contains('1808')) {
-  //                 service.characteristics.forEach(
-  //                   (characteristic) async {
-  //                     if (characteristic.uuid.toString().contains('2a18')) {
-  //                       print('Caracteristica 2a18');
+    await Future.delayed(
+      Duration(seconds: 2),
+      () {
+        device.services.forEach(
+          (listServices) {
+            listServices.forEach(
+              (service) {
+                if (service.uuid.toString().contains('1808')) {
+                  service.characteristics.forEach(
+                    (characteristic) async {
+                      if (characteristic.uuid.toString().contains('2a18')) {
+                        print('Caracteristica 2a18');
+                        descriptor = characteristic.descriptors.first;
 
-  //                       try {
-  //                         log('configurando descriptor 2a18' +
-  //                             characteristic.descriptors.first.uuid.toString());
-  //                         descriptor = characteristic.descriptors.first;
-  //                       } catch (e) {
-  //                         log('Erro ao configurar o descriptor ' +
-  //                             e.toString());
-  //                       }
-  //                       try {
-  //                         log('configurando notificações');
-  //                         // await characteristic
-  //                         //     .setNotifyValue(true)
-  //                         //     .timeout(Duration(seconds: 1));
-  //                         Future.delayed(Duration(seconds: 2));
-  //                       } catch (e) {
-  //                         log('Erro ao notificar a caracteristica 2a18 ' +
-  //                             e.toString());
-  //                       }
-  //                     }
-  //                     if (characteristic.uuid.toString().contains('2a52')) {
-  //                       print('Caracteristica 2a52');
+                        // try {
+                        //   log('configurando notificações');
+                        //   // await characteristic
+                        //   //     .setNotifyValue(true)
+                        //   //     .timeout(Duration(seconds: 1));
+                        //   Future.delayed(Duration(seconds: 2));
+                        // } catch (e) {
+                        //   log('Erro ao notificar a caracteristica 2a18 ' +
+                        //       e.toString());
+                        // }
+                      }
+                      // if (characteristic.uuid.toString().contains('2a52')) {
+                      //   print('Caracteristica 2a52');
 
-  //                       try {
-  //                         log('configurando descriptor 2a52');
-  //                         // await characteristic.descriptors.first
-  //                         //     .write(Uint8List.fromList([1, 00]))
-  //                         //     .timeout(Duration(seconds: 1));
-  //                         Future.delayed(Duration(seconds: 2));
-  //                       } catch (e) {
-  //                         log('Erro ao criar a indicação do descriptor ' +
-  //                             e.toString());
-  //                       }
-  //                       try {
-  //                         print('Escrevendo RACP...');
-  //                         // await characteristic
-  //                         //     .write(Uint8List.fromList([1, 00]))
-  //                         //     .timeout(Duration(seconds: 1));
-  //                         Future.delayed(Duration(seconds: 2));
-  //                       } catch (e) {
-  //                         log('Erro ao notificar a caracteristica 2a52 ' +
-  //                             e.toString());
-  //                       }
-  //                     }
-  //                   },
-  //                 );
-  //               }
-  //             },
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  //   // await descriptor.write([1, 0]).timeout(Duration(seconds: 2)).then(
-  //   //       (value) => descriptor.value.listen(
-  //   //         (event) {
-  //   //           log('Valor do descriptor ' + event.toString());
-  //   //         },
-  //   //       ),
-  //   //     );
-  // }
+                      //   try {
+                      //     log('configurando descriptor 2a52');
+                      //     // await characteristic.descriptors.first
+                      //     //     .write(Uint8List.fromList([1, 00]))
+                      //     //     .timeout(Duration(seconds: 1));
+                      //     Future.delayed(Duration(seconds: 2));
+                      //   } catch (e) {
+                      //     log('Erro ao criar a indicação do descriptor ' +
+                      //         e.toString());
+                      //   }
+                      //   try {
+                      //     print('Escrevendo RACP...');
+                      //     // await characteristic
+                      //     //     .write(Uint8List.fromList([1, 00]))
+                      //     //     .timeout(Duration(seconds: 1));
+                      //     Future.delayed(Duration(seconds: 2));
+                      //   } catch (e) {
+                      //     log('Erro ao notificar a caracteristica 2a52 ' +
+                      //         e.toString());
+                      //   }
+                      // }
+                    },
+                  );
+                }
+              },
+            );
+          },
+        );
+
+        try {
+          descriptor.write([0, 1]);
+        } catch (e) {
+          log('Erro ao configurar o descriptor 2902 da caracteristica' +
+              '\n' +
+              e.toString());
+        }
+      },
+    );
+    // await descriptor.write([1, 0]).timeout(Duration(seconds: 2)).then(
+    //       (value) => descriptor.value.listen(
+    //         (event) {
+    //           log('Valor do descriptor ' + event.toString());
+    //         },
+    //       ),
+    //     );
+  }
 }

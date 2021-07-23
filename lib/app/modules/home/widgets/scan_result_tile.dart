@@ -303,7 +303,9 @@ class DescriptorTile extends StatelessWidget {
               Icons.file_upload,
               color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
             ),
-            onPressed: onWritePressed,
+            onPressed: descriptor.characteristicUuid.toString().contains('2a18')
+                ? () async {}
+                : () async {},
           )
         ],
       ),

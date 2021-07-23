@@ -1,3 +1,5 @@
+import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -27,18 +29,24 @@ class DeviceScreen extends StatelessWidget {
                       try {
                         await c.write(
                           Uint8List.fromList([1, 1]),
-                          withoutResponse: true,
+                          withoutResponse: false,
                         );
+                        log('escrita realizada com sucesso!');
+
                         // await c.read().then((value) {
                         //   print('leitura');
                         //   print(value);
                         // });
                       } catch (e) {
-                        print(e + ' ${c.uuid.toString()}');
+                        log('Erro ao escrever ' + e.toString());
                       }
                     },
                     onNotificationPressed: () async {
-                      await c.setNotifyValue(!c.isNotifying);
+                      try {
+                        await c.setNotifyValue(true);
+                      } catch (e) {
+                        log('Erro ao notificar ' + e.toString());
+                      }
                     },
                     // descriptorTiles: c.descriptors
                     //     .map(
@@ -129,10 +137,10 @@ class DeviceScreen extends StatelessWidget {
                       IconButton(
                           icon: Icon(Icons.refresh),
                           onPressed: () async {
-                            await device
-                                .discoverServices()
-                                .timeout(Duration(seconds: 2));
-                            // .then((value) => _setconfigs());
+                            // await setConfigs;
+                            List<BluetoothService> services =
+                                await device.discoverServices();
+                            await _setDescriptorConfig(services);
                           }),
                       IconButton(
                         icon: SizedBox(
@@ -172,6 +180,92 @@ class DeviceScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _setDescriptorConfig(List<BluetoothService> services) async {
+    // BluetoothCharacteristic notifyCharacteristic;
+    // BluetoothCharacteristic writeCharacteristic;
+
+    // if (Platform.isAndroid) {
+    try {
+      log('iniciando negociacao do mtu');
+      await device
+          .requestMtu(23)
+          .timeout(Duration(seconds: 2))
+          .then((value) async {
+        device.mtu.listen((event) {
+          log('MTU negociado com sucesso: Size-> ' + event.toString());
+        });
+      }).catchError((onError) {
+        log('Error ' + onError.toString());
+      });
+    } catch (e) {
+      log('erro ao negociar o MTU' + e.toString());
+    }
+    // }
+
+    services.forEach(
+      (service) {
+        if (service.uuid.toString().contains('1808')) {
+          service.characteristics.forEach(
+            (characteristic) async {
+              if (characteristic.uuid.toString().contains('2a18')) {
+                print('Caracteristica 2a18');
+                try {
+                  await characteristic.descriptors.first.write([0, 1]);
+                  log('Descriptor configurado com sucesso!!');
+                } catch (e) {
+                  log('Erro ao configurar o descriptor 2902 da caracteristica' +
+                      '\n' +
+                      e.toString());
+                }
+                try {
+                  log('configurando notificações');
+                  // await characteristic
+                  //     .setNotifyValue(true)
+                  //     .timeout(Duration(seconds: 1));
+                  Future.delayed(Duration(seconds: 2));
+                } catch (e) {
+                  log('Erro ao notificar a caracteristica 2a18 ' +
+                      e.toString());
+                }
+              }
+              // if (characteristic.uuid.toString().contains('2a52')) {
+              //   print('Caracteristica 2a52');
+
+              //   try {
+              //     log('configurando descriptor 2a52');
+              //     // await characteristic.descriptors.first
+              //     //     .write(Uint8List.fromList([1, 00]))
+              //     //     .timeout(Duration(seconds: 1));
+              //     Future.delayed(Duration(seconds: 2));
+              //   } catch (e) {
+              //     log('Erro ao criar a indicação do descriptor ' +
+              //         e.toString());
+              //   }
+              //   try {
+              //     print('Escrevendo RACP...');
+              //     // await characteristic
+              //     //     .write(Uint8List.fromList([1, 00]))
+              //     //     .timeout(Duration(seconds: 1));
+              //     Future.delayed(Duration(seconds: 2));
+              //   } catch (e) {
+              //     log('Erro ao notificar a caracteristica 2a52 ' +
+              //         e.toString());
+              //   }
+              // }
+            },
+          );
+        }
+      },
+    );
+    // await descriptor.write([1, 0]).timeout(Duration(seconds: 2)).then(
+    //       (value) => descriptor.value.listen(
+    //         (event) {
+    //           log('Valor do descriptor ' + event.toString());
+    //         },
+    //       ),
+    //     );
   }
 }
 // print('Configurando o dispositivo...');
