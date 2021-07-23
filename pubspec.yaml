@@ -1,0 +1,34 @@
+name: flutter_bluetooth_1_22_6
+description: A new Flutter project.
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  flutter_blue: ^0.7.3
+  flutter_modular: ^2.0.1
+  fluttertoast:
+  
+  flutter:
+    sdk: flutter
+
+  flutter_launcher_icons: ^0.8.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter_icons:
+  image_path: 'assets/roche_icon.png'
+  android: true
+  ios: true
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
